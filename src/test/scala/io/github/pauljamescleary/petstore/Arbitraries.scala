@@ -1,6 +1,7 @@
 package io.github.pauljamescleary.petstore
 
 import java.time.Instant
+
 import cats.effect.IO
 import domain.authentication.SignupRequest
 import org.scalacheck._
@@ -11,12 +12,12 @@ import domain.{orders, pets}
 import domain.pets._
 import domain.pets.PetStatus._
 import domain.users.{Role, _}
+import io.github.pauljamescleary.petstore.domain.reviews.Reviews
 import tsec.common.SecureRandomId
 import tsec.jwt.JWTClaims
 import tsec.authentication.AugmentedJWT
 import tsec.jws.mac._
 import tsec.mac.jca._
-
 
 trait PetStoreArbitraries {
 
@@ -80,6 +81,14 @@ trait PetStoreArbitraries {
     } yield User(userName, firstName, lastName, email, password, phone, id, role)
   }
 
+  implicit val review = Arbitrary[Reviews] {
+    for {
+      userId <- Gen.option(Gen.posNum[Long])
+      petId <- Gen.posNum[Long]
+      review <- Gen.option(arbitrary[String])
+    } yield Reviews(userId, petId, review)
+  }
+
   case class AdminUser(value: User)
   case class CustomerUser(value: User)
 
@@ -114,11 +123,15 @@ trait PetStoreArbitraries {
   implicit val jwtMac: Arbitrary[JWTMac[HMACSHA256]] = Arbitrary {
     for {
       key <- Gen.const(HMACSHA256.unsafeGenerateKey)
-      claims <- Gen.finiteDuration.map(exp => JWTClaims.withDuration[IO](expiration = Some(exp)).unsafeRunSync())
-    } yield JWTMacImpure.build[HMACSHA256](claims, key).getOrElse(throw new Exception("Inconceivable"))
+      claims <- Gen.finiteDuration.map(exp =>
+        JWTClaims.withDuration[IO](expiration = Some(exp)).unsafeRunSync())
+    } yield
+      JWTMacImpure.build[HMACSHA256](claims, key).getOrElse(throw new Exception("Inconceivable"))
   }
 
-  implicit def augmentedJWT[A, I](implicit arb1: Arbitrary[JWTMac[A]], arb2: Arbitrary[I]): Arbitrary[AugmentedJWT[A, I]] =
+  implicit def augmentedJWT[A, I](
+      implicit arb1: Arbitrary[JWTMac[A]],
+      arb2: Arbitrary[I]): Arbitrary[AugmentedJWT[A, I]] =
     Arbitrary {
       for {
         id <- arbitrary[SecureRandomId]

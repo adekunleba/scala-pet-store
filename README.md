@@ -13,7 +13,7 @@ I have most of the endpoints in place.  There are few big pieces remaining in ca
 3. Create a microsite documenting the patterns in the pet store.  Kind of a mini-book
 
 # Want to help out?
-[Join the chat at Scala Pet Store gitter.im](https://gitter.im/scala-pet-store/scala-pet-store)
+[Join the chat at Scala Pet Store gitter.im](c)
 
 If you have general feedback on how things could be better, feel free to post an issue / gist or
 open a PR!  I am looking for ideas like:
